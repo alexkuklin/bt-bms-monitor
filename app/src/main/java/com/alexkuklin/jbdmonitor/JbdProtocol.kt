@@ -28,6 +28,28 @@ object JbdProtocol {
     val REQUEST_BASIC = byteArrayOf(0xDD.toByte(), 0xA5.toByte(), 0x03, 0x00, 0xFF.toByte(), 0xFD.toByte(), 0x77)
     val REQUEST_CELLS = byteArrayOf(0xDD.toByte(), 0xA5.toByte(), 0x04, 0x00, 0xFF.toByte(), 0xFC.toByte(), 0x77)
 
+    const val OP_READ = 0xA5
+    const val OP_WRITE = 0x5A
+
+    /** Registers read in factory mode by the parameter dump (raw, uninterpreted). */
+    val DUMP_REGISTERS = 0x10..0x5F
+    const val REG_HW_VERSION = 0x05
+
+    /** Builds `DD op reg len data crc(2) 77`; crc = 0x10000 - (reg + len + data bytes). */
+    fun request(op: Int, reg: Int, data: ByteArray = ByteArray(0)): ByteArray {
+        var sum = reg + data.size
+        data.forEach { sum += it.toInt() and 0xFF }
+        val crc = (0x10000 - sum) and 0xFFFF
+        return byteArrayOf(0xDD.toByte(), op.toByte(), reg.toByte(), data.size.toByte()) + data +
+            byteArrayOf((crc shr 8).toByte(), crc.toByte(), 0x77)
+    }
+
+    fun readRequest(reg: Int) = request(OP_READ, reg)
+
+    /** Factory-mode switch: register 0x00 <- 0x5678 enters, register 0x01 <- 0x0000 leaves. */
+    val ENTER_FACTORY = request(OP_WRITE, 0x00, byteArrayOf(0x56, 0x78))
+    val EXIT_FACTORY = request(OP_WRITE, 0x01, byteArrayOf(0x00, 0x00))
+
     private fun ByteArray.u8(i: Int) = this[i].toInt() and 0xFF
     private fun ByteArray.u16(i: Int) = (u8(i) shl 8) or u8(i + 1)
     private fun ByteArray.s16(i: Int) = u16(i).toShort().toInt()

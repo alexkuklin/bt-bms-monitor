@@ -12,5 +12,7 @@ class MonitorViewModel(app: Application) : AndroidViewModel(app) {
     fun startScan() = monitor.startScan()
     fun connect(device: Device) = monitor.connect(device)
     fun disconnect() = monitor.disconnect()
+    fun dumpParameters() = monitor.dumpParameters()
+    fun dumpConsumed() = monitor.dumpConsumed()
     fun updateSettings(s: AlertSettings) = monitor.updateSettings(s)
 }

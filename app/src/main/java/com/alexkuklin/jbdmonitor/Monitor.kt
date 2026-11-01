@@ -3,7 +3,12 @@ package com.alexkuklin.jbdmonitor
 import android.content.Context
 import androidx.core.content.ContextCompat
 import android.content.Intent
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -16,6 +21,13 @@ import kotlinx.coroutines.launch
 import kotlin.math.exp
 
 enum class ConnState { Idle, Scanning, Connecting, Connected }
+
+sealed interface DumpState {
+    data object Idle : DumpState
+    data class Running(val done: Int, val total: Int) : DumpState
+    data class Done(val json: String, val fileName: String) : DumpState
+    data class Failed(val reason: String) : DumpState
+}
 
 data class Sample(val tMs: Long, val amps: Float)
 
@@ -31,6 +43,7 @@ data class UiState(
     val message: String? = null,
     val settings: AlertSettings = AlertSettings(),
     val alerts: Set<Alert> = emptySet(),
+    val dump: DumpState = DumpState.Idle,
 )
 
 /** Process-wide owner of the BLE connection, so it survives the UI and runs under [MonitorService]. */
@@ -62,6 +75,9 @@ class Monitor private constructor(private val app: Context) : BleClient.Listener
     private var poll: Job? = null
     private var reconnect: Job? = null
     private var scanStop: Job? = null
+    private var dumpJob: Job? = null
+    /** Request waiting for a response during a dump (main thread only). */
+    private var pending: Pair<Int, CompletableDeferred<Frame>>? = null
 
     /** Address we should stay connected to; null once the user disconnects. */
     private var wantAddress: String? = null
@@ -105,6 +121,7 @@ class Monitor private constructor(private val app: Context) : BleClient.Listener
         wantAddress = null
         reconnect?.cancel()
         poll?.cancel()
+        dumpJob?.cancel()
         client.close()
         prefs.edit().remove("addr").remove("name").apply()
         history.clear()
@@ -164,21 +181,96 @@ class Monitor private constructor(private val app: Context) : BleClient.Listener
             history.clear()
             lastSampleMs = 0L
             _ui.update { it.copy(conn = ConnState.Connected, message = null, history = emptyList()) }
+            startPolling()
+        }
+    }
+
+    private fun startPolling() {
+        poll?.cancel()
+        poll = scope.launch {
+            while (true) {
+                client.send(JbdProtocol.REQUEST_BASIC)
+                delay(400)
+                client.send(JbdProtocol.REQUEST_CELLS)
+                delay(600)
+            }
+        }
+    }
+
+    // --- Read-only parameter dump ---
+
+    fun dumpParameters() {
+        if (dumpJob?.isActive == true || _ui.value.conn != ConnState.Connected) return
+        val regs = mutableListOf<RegisterRead>()
+        val addrs = listOf(JbdProtocol.REG_HW_VERSION) + JbdProtocol.DUMP_REGISTERS.toList()
+        dumpJob = scope.launch {
             poll?.cancel()
-            poll = launch {
-                while (true) {
-                    client.send(JbdProtocol.REQUEST_BASIC)
-                    delay(400)
-                    client.send(JbdProtocol.REQUEST_CELLS)
-                    delay(600)
+            delay(300) // let an in-flight poll response arrive
+            var inFactory = false
+            try {
+                _ui.update { it.copy(dump = DumpState.Running(0, addrs.size)) }
+                var timeouts = 0
+                for ((n, reg) in addrs.withIndex()) {
+                    if (reg == JbdProtocol.DUMP_REGISTERS.first) {
+                        transact(JbdProtocol.ENTER_FACTORY, 0x00) ?: error("BMS did not accept factory mode")
+                        inFactory = true
+                    }
+                    val f = transact(JbdProtocol.readRequest(reg), reg)
+                    if (f == null) {
+                        regs += RegisterRead(reg, -1, ByteArray(0))
+                        if (++timeouts >= 5) error("BMS stopped responding")
+                    } else {
+                        timeouts = 0
+                        regs += RegisterRead(reg, f.status, f.data)
+                    }
+                    _ui.update { it.copy(dump = DumpState.Running(n + 1, addrs.size)) }
+                }
+                val stamp = java.time.OffsetDateTime.now().format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                val name = _ui.value.deviceName
+                val json = RegisterDump.toJson(name, appVersion(), stamp, regs)
+                val file = "jbd-dump-" + stamp.take(19).replace(":", "").replace("-", "").replace("T", "-") + ".json"
+                _ui.update { it.copy(dump = DumpState.Done(json, file)) }
+            } catch (e: CancellationException) {
+                _ui.update { it.copy(dump = DumpState.Idle) }
+                throw e
+            } catch (e: Exception) {
+                _ui.update { it.copy(dump = DumpState.Failed(e.message ?: "Dump failed")) }
+            } finally {
+                withContext(NonCancellable) {
+                    if (inFactory) {
+                        client.send(JbdProtocol.EXIT_FACTORY)
+                        delay(300)
+                    }
+                    if (_ui.value.conn == ConnState.Connected) startPolling()
                 }
             }
         }
     }
 
+    fun dumpConsumed() = _ui.update { it.copy(dump = DumpState.Idle) }
+
+    /** Sends [request] and waits for the frame with command [cmd]; null on timeout. */
+    private suspend fun transact(request: ByteArray, cmd: Int): Frame? {
+        val d = CompletableDeferred<Frame>()
+        pending = cmd to d
+        client.send(request)
+        return try {
+            withTimeout(1_500) { d.await() }
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            null
+        } finally {
+            pending = null
+        }
+    }
+
+    private fun appVersion() = runCatching {
+        app.packageManager.getPackageInfo(app.packageName, 0).versionName
+    }.getOrNull() ?: "?"
+
     override fun onDisconnected() {
         scope.launch {
             poll?.cancel()
+            dumpJob?.cancel()
             val addr = wantAddress
             if (addr == null) {
                 _ui.update { it.copy(conn = ConnState.Idle) }
@@ -204,6 +296,11 @@ class Monitor private constructor(private val app: Context) : BleClient.Listener
     override fun onData(bytes: ByteArray) {
         scope.launch {
             for (f in assembler.feed(bytes)) {
+                val waiting = pending
+                if (waiting != null && waiting.first == f.cmd) {
+                    waiting.second.complete(f)
+                    continue
+                }
                 if (f.status != 0) continue
                 when (f.cmd) {
                     JbdProtocol.CMD_BASIC -> JbdProtocol.parseBasic(f.data)?.let(::onBasic)

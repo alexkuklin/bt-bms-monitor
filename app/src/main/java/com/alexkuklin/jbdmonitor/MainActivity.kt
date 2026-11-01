@@ -31,7 +31,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
+import android.widget.Toast
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -255,6 +258,8 @@ private fun Dashboard(ui: UiState, vm: MonitorViewModel) {
 
         AlertSettingsSection(ui.settings, vm::updateSettings)
 
+        DumpSection(ui.dump, vm)
+
         Section("Status") {
             Text(
                 "Charge FET ${if (info.chargeFetOn) "on" else "off"} · Discharge FET ${if (info.dischargeFetOn) "on" else "off"}",
@@ -343,4 +348,61 @@ private fun AlertRow(label: String, enabled: Boolean, value: String, onToggle: (
         Spacer(Modifier.width(8.dp))
         OutlinedButton(onClick = { onStep(1) }, enabled = enabled) { Text("+") }
     }
+}
+
+@Composable
+private fun DumpSection(dump: DumpState, vm: MonitorViewModel) {
+    val ctx = LocalContext.current
+    var confirm by remember { mutableStateOf(false) }
+    var pending by remember { mutableStateOf<DumpState.Done?>(null) }
+    val saver = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        val d = pending
+        if (uri != null && d != null) {
+            val ok = runCatching {
+                ctx.contentResolver.openOutputStream(uri)?.use { it.write(d.json.toByteArray()) } != null
+            }.getOrDefault(false)
+            Toast.makeText(ctx, if (ok) "Dump saved" else "Could not save dump", Toast.LENGTH_SHORT).show()
+        }
+        pending = null
+        vm.dumpConsumed()
+    }
+    LaunchedEffect(dump) {
+        if (dump is DumpState.Done && pending == null) {
+            pending = dump
+            saver.launch(dump.fileName)
+        }
+    }
+
+    Section("BMS parameters") {
+        when (dump) {
+            is DumpState.Running -> {
+                Text("Reading registers… ${dump.done}/${dump.total}")
+                Spacer(Modifier.height(6.dp))
+                LinearProgressIndicator(progress = { dump.done / dump.total.toFloat() }, Modifier.fillMaxWidth())
+            }
+            is DumpState.Failed -> {
+                Text(dump.reason, color = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.height(6.dp))
+                OutlinedButton(onClick = vm::dumpConsumed) { Text("OK") }
+            }
+            else -> {
+                Text("Save the raw BMS parameter registers to a file (read-only).", style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(6.dp))
+                OutlinedButton(onClick = { confirm = true }) { Text("Dump parameters…") }
+            }
+        }
+    }
+
+    if (confirm) AlertDialog(
+        onDismissRequest = { confirm = false },
+        title = { Text("Dump BMS parameters?") },
+        text = {
+            Text(
+                "This briefly switches the BMS into factory mode to read its parameter registers (nothing is written), " +
+                    "then switches back. Live monitoring pauses for about 15 seconds. Do not disconnect during the dump."
+            )
+        },
+        confirmButton = { TextButton(onClick = { confirm = false; vm.dumpParameters() }) { Text("Dump") } },
+        dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } },
+    )
 }

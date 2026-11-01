@@ -125,4 +125,29 @@ class AlertEngineTest {
         assertEquals(15, cellDeltaMv(listOf(3.300f, 3.315f, 3.310f)))
         assertEquals(null, cellDeltaMv(listOf(3.3f)))
     }
+
+    @Test
+    fun buildsReadRequestsMatchingKnownFrames() {
+        // Same frames as the hard-coded polling requests.
+        assertTrue(JbdProtocol.readRequest(0x03).contentEquals(JbdProtocol.REQUEST_BASIC))
+        assertTrue(JbdProtocol.readRequest(0x04).contentEquals(JbdProtocol.REQUEST_CELLS))
+    }
+
+    @Test
+    fun buildsFactoryModeFrames() {
+        fun hex(b: ByteArray) = b.joinToString("") { "%02X".format(it) }
+        assertEquals("DD5A00025678FF3077", hex(JbdProtocol.ENTER_FACTORY))
+        assertEquals("DD5A01020000FFFD77", hex(JbdProtocol.EXIT_FACTORY))
+    }
+
+    @Test
+    fun dumpJsonIsRawAndWellFormed() {
+        val json = RegisterDump.toJson(
+            "BMS \"1\"", "1.0", "2026-11-01T10:00:00Z",
+            listOf(RegisterRead(0x24, 0, byteArrayOf(0x0F, 0xA0.toByte())), RegisterRead(0x30, 0x80, ByteArray(0))),
+        )
+        assertTrue(json.contains("\"reg\": \"0x24\", \"status\": 0, \"hex\": \"0FA0\", \"u16\": 4000}"))
+        assertTrue(json.contains("\"reg\": \"0x30\", \"status\": 128, \"hex\": \"\"}"))
+        assertTrue(json.contains("BMS \\\"1\\\""))
+    }
 }
