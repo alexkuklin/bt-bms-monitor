@@ -12,12 +12,27 @@ android {
         applicationId = "com.alexkuklin.btbmsmonitor"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1"
+        // The release workflow passes these in; a local build keeps the defaults. Play wants versionCode to grow with every upload.
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "0.1"
+    }
+
+    // The UPLOAD key (Play App Signing holds the real app signing key). Only the release workflow has it, as environment variables;
+    // without them the release build is simply unsigned, which is what the ordinary CI builds.
+    signingConfigs {
+        System.getenv("UPLOAD_KEYSTORE_FILE")?.let { path ->
+            create("upload") {
+                storeFile = file(path)
+                storePassword = System.getenv("UPLOAD_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("UPLOAD_KEY_ALIAS")
+                keyPassword = System.getenv("UPLOAD_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("upload")
             isMinifyEnabled = false
         }
     }

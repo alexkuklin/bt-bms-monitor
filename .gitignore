@@ -5,3 +5,10 @@ local.properties
 *.iml
 .DS_Store
 .kotlin/
+
+# Signing keys never belong in the repository
+*.jks
+*.keystore
+*.p12
+upload-cert.pem
+passwords.txt
