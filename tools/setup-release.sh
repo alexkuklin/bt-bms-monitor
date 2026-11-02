@@ -3,7 +3,7 @@
 # the keystore and its passwords are generated here and go straight to GitHub, never through anyone else's session.
 #
 #   tools/setup-release.sh OWNER/REPO TAG_PATTERN [KEY_ALIAS]
-#   e.g.  tools/setup-release.sh alexkuklin/jbd-phone-app 'v*'
+#   e.g.  tools/setup-release.sh alexkuklin/bt-bms-monitor 'v*'
 #
 # Creates an UPLOAD key (Play App Signing keeps the real app signing key; a lost or leaked upload key can be reset in the Play Console).
 # - secrets in the "production" environment: UPLOAD_KEYSTORE_BASE64, UPLOAD_KEYSTORE_PASSWORD, UPLOAD_KEY_PASSWORD
