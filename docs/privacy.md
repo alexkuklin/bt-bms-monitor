@@ -3,6 +3,8 @@ title: Privacy Policy — BT BMS Monitor
 permalink: /privacy/
 ---
 
+# Privacy Policy — BT BMS Monitor
+
 _Last updated: 2026-11-01_
 
 BT BMS Monitor ("the app") reads data from a battery management system (BMS) over Bluetooth Low Energy and displays it on your phone.
