@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.alexkuklin.jbdmonitor"
+    namespace = "com.alexkuklin.btbmsmonitor"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.alexkuklin.jbdmonitor"
+        applicationId = "com.alexkuklin.btbmsmonitor"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

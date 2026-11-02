@@ -1,4 +1,4 @@
-package com.alexkuklin.jbdmonitor
+package com.alexkuklin.btbmsmonitor
 
 import android.Manifest
 import android.content.Context
@@ -124,7 +124,7 @@ private fun CenteredColumn(content: @Composable ColumnScope.() -> Unit) = Column
 @Composable
 private fun ScanScreen(ui: UiState, vm: MonitorViewModel) {
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("JBD Battery Monitor", style = MaterialTheme.typography.headlineSmall)
+        Text("BT BMS Monitor", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         when (ui.conn) {
             ConnState.Connecting -> Row(verticalAlignment = Alignment.CenterVertically) {

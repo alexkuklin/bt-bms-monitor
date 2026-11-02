@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "JbdMonitor"
+rootProject.name = "BtBmsMonitor"
 include(":app")

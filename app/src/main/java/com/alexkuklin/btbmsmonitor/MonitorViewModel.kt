@@ -1,4 +1,4 @@
-package com.alexkuklin.jbdmonitor
+package com.alexkuklin.btbmsmonitor
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

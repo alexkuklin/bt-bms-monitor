@@ -1,4 +1,4 @@
-package com.alexkuklin.jbdmonitor
+package com.alexkuklin.btbmsmonitor
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -84,6 +84,6 @@ class MonitorService : Service() {
     private companion object {
         const val CHANNEL = "status"
         const val NOTIF_ID = 1
-        const val ACTION_DISCONNECT = "com.alexkuklin.jbdmonitor.DISCONNECT"
+        const val ACTION_DISCONNECT = "com.alexkuklin.btbmsmonitor.DISCONNECT"
     }
 }

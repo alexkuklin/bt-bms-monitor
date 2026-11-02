@@ -1,4 +1,4 @@
-package com.alexkuklin.jbdmonitor
+package com.alexkuklin.btbmsmonitor
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

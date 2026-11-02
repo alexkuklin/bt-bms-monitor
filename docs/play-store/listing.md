@@ -1,12 +1,12 @@
 # Play Store listing draft
 
-**App name (max 30):** JBD Battery Monitor
+**App name (max 30):** BT BMS Monitor
 
 **Short description (max 80):**
-Live Bluetooth monitor for JBD / Xiaoxiang BMS: current, cells, SoC and alerts.
+Live Bluetooth battery monitor: current, cell voltages, SoC and alerts.
 
 **Full description (max 4000):**
-JBD Battery Monitor connects to your JBD (Xiaoxiang) battery management system over Bluetooth LE and shows what your battery is doing in real time. Ideal for campers, caravans, boats, solar storage and DIY LiFePO4 packs.
+BT BMS Monitor connects to your JBD (Xiaoxiang) battery management system over Bluetooth LE and shows what your battery is doing in real time. Ideal for campers, caravans, boats, solar storage and DIY LiFePO4 packs.
 
 • Current gauge — logarithmic ±200 A scale; charging in green, discharging in orange
 • Voltage, power and state of charge at a glance in the centre of the gauge

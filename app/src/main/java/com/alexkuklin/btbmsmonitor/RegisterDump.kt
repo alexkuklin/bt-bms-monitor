@@ -1,4 +1,4 @@
-package com.alexkuklin.jbdmonitor
+package com.alexkuklin.btbmsmonitor
 
 /** One register read. [status] is the BMS status byte (0 = ok, 0x80 = rejected) or -1 on timeout. */
 class RegisterRead(val reg: Int, val status: Int, val data: ByteArray)
@@ -20,7 +20,7 @@ object RegisterDump {
             appendLine("{")
             appendLine("  \"format\": \"jbd-register-dump\",")
             appendLine("  \"version\": 1,")
-            appendLine("  \"app\": \"JBD Battery Monitor $appVersion\",")
+            appendLine("  \"app\": \"BT BMS Monitor $appVersion\",")
             appendLine("  \"timestamp\": \"${esc(timestamp)}\",")
             appendLine("  \"device\": \"${esc(deviceName ?: "")}\",")
             appendLine("  \"note\": \"Raw register data, big-endian, as returned by the BMS. Not interpreted.\",")

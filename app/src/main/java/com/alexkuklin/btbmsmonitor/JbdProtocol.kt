@@ -1,4 +1,4 @@
-package com.alexkuklin.jbdmonitor
+package com.alexkuklin.btbmsmonitor
 
 /** Decoded response to the 0x03 "basic info" command. Current is positive while charging. */
 data class BasicInfo(

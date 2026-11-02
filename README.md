@@ -1,4 +1,4 @@
-# JBD Battery Monitor
+# BT BMS Monitor
 
 Android app (Kotlin + Jetpack Compose) that reads a JBD / Xiaoxiang BMS over Bluetooth LE and shows:
 
