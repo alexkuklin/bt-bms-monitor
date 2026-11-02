@@ -2,7 +2,7 @@
 
 _Last updated: 2026-11-01_
 
-BT BMS Monitor ("the app") reads data from a JBD / Xiaoxiang battery management system (BMS) over Bluetooth Low Energy and displays it on your phone.
+BT BMS Monitor ("the app") reads data from a battery management system (BMS) over Bluetooth Low Energy and displays it on your phone.
 
 ## Data we collect
 **None.** The app does not collect, transmit, sell or share any personal data. It has no accounts, no advertising, no analytics and no crash-reporting SDKs, and it does not use the internet.
