@@ -28,7 +28,8 @@ JBD and Xiaoxiang are trademarks of their respective owners. This app is an inde
 
 **Category:** Tools (or Auto & Vehicles)
 **Contact email:** alex.kuklin@gmail.com
-**Graphics still needed:** 512×512 icon, 1024×500 feature graphic. Phone screenshots: `docs/screenshots/`.
+**Privacy policy URL:** https://alexkuklin.github.io/bt-bms-monitor/privacy/
+**Graphics:** `docs/play-store/graphics/icon-512.png` (512×512) and `feature-1024x500.png`; regenerate with `tools/make-store-graphics.py`. Phone screenshots: `docs/screenshots/`.
 
 ## Data safety form answers
 - Collects or shares user data: **No**
