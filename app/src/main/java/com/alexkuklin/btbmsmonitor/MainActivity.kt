@@ -258,7 +258,7 @@ private fun Dashboard(ui: UiState, vm: MonitorViewModel) {
 
         AlertSettingsSection(ui.settings, vm::updateSettings)
 
-        DumpSection(ui.dump, vm)
+        if (BuildConfig.PARAM_DUMP) DumpSection(ui.dump, vm)
 
         Section("Status") {
             Text(

@@ -200,7 +200,7 @@ class Monitor private constructor(private val app: Context) : BleClient.Listener
     // --- Read-only parameter dump ---
 
     fun dumpParameters() {
-        if (dumpJob?.isActive == true || _ui.value.conn != ConnState.Connected) return
+        if (!BuildConfig.PARAM_DUMP || dumpJob?.isActive == true || _ui.value.conn != ConnState.Connected) return
         val regs = mutableListOf<RegisterRead>()
         val addrs = listOf(JbdProtocol.REG_HW_VERSION) + JbdProtocol.DUMP_REGISTERS.toList()
         dumpJob = scope.launch {

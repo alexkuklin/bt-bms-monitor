@@ -31,9 +31,14 @@ android {
     }
 
     buildTypes {
+        // The BMS parameter dump is not yet verified on real hardware: debug builds only.
+        debug {
+            buildConfigField("boolean", "PARAM_DUMP", "true")
+        }
         release {
             signingConfig = signingConfigs.findByName("upload")
             isMinifyEnabled = false
+            buildConfigField("boolean", "PARAM_DUMP", "false")
         }
     }
     compileOptions {
@@ -45,6 +50,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
