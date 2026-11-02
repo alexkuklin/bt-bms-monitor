@@ -1,4 +1,7 @@
-# Privacy Policy — BT BMS Monitor
+---
+title: Privacy Policy — BT BMS Monitor
+permalink: /privacy/
+---
 
 _Last updated: 2026-11-01_
 

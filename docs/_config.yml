@@ -1,0 +1,5 @@
+title: BT BMS Monitor
+description: Android app that monitors a Bluetooth LE battery management system (BMS).
+theme: jekyll-theme-minimal
+exclude:
+  - play-store
